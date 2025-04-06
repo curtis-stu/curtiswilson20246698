@@ -1,82 +1,169 @@
-Best Buy Retail Point Of Sale System
+# Point of Sale (POS) System created for Best Buy Retail Store
 
-Python
+# Predefined product list; the product's price is on the right and the stock is on the left
+products = {
+    "Rice": [100, 20], "White Bread": [350, 10], "Flour": [100, 20],
+    "Cornflakes": [450, 15], "Sugar": [200, 20], "Brown Rice": [150,10],
+    "Lasco": [650, 15], "Milk": [250, 15], "Cornbeef": [650, 10],
+    "Mackerel": [350, 20],
+}
 
+#This represents the shopping cart
+cart = {}
 
-Description
-
-This is a simple Point of Sale (POS) system that was created to allow the user to do the following functions: 
-
-1. Add items to the cart
-2. View all products
-3. Remove items from the cart
-4. View the cart
-5. Checkout
-6. Exit the system
-
-
-Features
-
-This python program was created for Best Buy Retail's point of sale system, and it contains the following features:
-
-1. Product Management – It stores the product's name, and its respective price and quantity.  
-2. Shopping Cart Operations– It allows the user to add, remove, and view items in the cart.  
-3. Checkout & Payment Processing – Calculates subtotal, tax (10%), and validates payment.  
-4. Discount System– 5% discount for any purchase over five thousand dollars ($5000).  
-5. Low-Stock Alerts – Alerts are given to the user when the stock is below five (5).  
-6. Receipt Generation – Formats a receipt for the customer after the transaction is completed.  
-7. Multiple Transactions – Allows multiple purchases within a single session until the user opts to exit the program.
-8. Input Validation – Prevents incorrect inputs and ensures smooth operation.
+# This function will allow the items to be displayed
+def view_proucts():
+    print("Available products: ")
+    for item, details in products.items():
+      print(f"{item}: ${details[0]} JMD (Stock: {details[1]})")
 
 
-Requirements To Use Program
+# This function allows the user to add items to the cart
+def add_item():
+    item = input("Please enter the product's name: ").title()
+# The .title string method changes the initial letter to uppercase and the the following characters to lowercase
 
-1. Python 
-2. Google Colab
+    if item in products:
+        quantity = input("Please enter the amount: ")
+        if quantity.isdigit():
+# The .isdigit method ensures that the input received is solely numbers, otherwise it would return a False
 
+            quantity = int(quantity)
+            if quantity <= products[item][1]:
+                cart[item] = cart.get(item, 0) + quantity
+                products[item][1] -= quantity
+                print(f"You just added {quantity} {item}(s) to the cart.")
+                print(f"There are {products[item][1]} {item}(s) left in stock.")
 
-Usage
+                #Low stock prompt
+                if products[item][1] <= 5:
+                    print("Low stock alert!")
+                    print(f"Only {products[item][1]} {item}(s) left in stock.")
 
-Firstly, run the script using Python or Google Colab. The user will then receive an on screen prompt which allows the user to input data based on the criteria(prompt). The user will be presented a menu with a list of options. Based on the function that the user may want to carry out, they should select the choice given accordingly. The user is urged to follow the instructions on the screen in order to maximise the program's efficiency and to avoid any possible errors.
-
-
-Program Functionalities
-
-1. Product Management:  The program maintains a product catalog with ten (10) predefined products. It checks stock availability before adding the items to the cart.
-
-
-2. Shopping Cart Operations:  
-
-- Add Item: Allows the user to enter the product name and quantity.  
-- Remove Item:  Allows the user to remove a specific quantity or the entire product from the cart.  
-- View Cart: See all selected items with their price and quantity.
-
-
-3. Checkout & Payment Validation:
-
-- Subtotal Calculation: Adds up all item costs.  
-- Sales Tax (10%): Applied to the subtotal.  
-- Discounts (5%): Applied if the total cost of items is over $5000 
-- Payment Validation: Ensures customers cannot pay less than the total amount stipulated.  
-- Change Calculation: Returns the correct amount of change after payment.
+            else:
+                print(f"Not enough {item} available in stock.")
+                print(f"Only {products[item][1]} {item}(s) available.")
+                print("Please select a smaller quantity")
 
 
-4. Receipt Generation: Displays formatted receipt including the store's name, list of purchased items, subtotal, tax, discount(if qualified), total amount due, payment received and change returned.
+        else:
+            print("Invalid input. Please select a valid option from the menu. ")
+
+    else:
+        print("This product was not found.")
+        print("Please try again. ")
+
+# This function will allow the user to remove items from the cart
+def remove_item():
+    if not cart:
+        print("Your cart is currently empty.")
+        return
+
+    print("Current Cart:", cart)
+    item = input("Please enter the product's name that you wish to remove from the cart: ").title()
+
+    if item in cart:
+        quantity = int(input("Please enter the amount that you wish to remove from the cart: "))
+        if quantity >= cart[item]:
+            products[item][1] += cart[item]
+            del cart[item]
+        else:
+            cart[item] -= quantity
+            products[item][1] += quantity
+        print(f"You just removed {quantity} {item}(s) from your cart.")
+    else:
+        print("This item was not found in your cart.")
+
+# This allows the user to view the items in the cart
+def view_cart():
+    if not cart:
+        print("Your cart is currently empty.")
+        return
+    print("Your Cart: ")
+    total = 0
+    for item, quantity in cart.items():
+        price = products[item][0]
+        print(f"{item}: {quantity} x ${price} = ${quantity * price}")
+        total += quantity * price
+    print(f"Subtotal: ${total} JMD")
+
+# This function facilitates the checkout process
+def checkout():
+    if not cart:
+        print("Your cart is currently empty.")
+        return
+
+    subtotal = sum(products[item][0] * quantity for item, quantity in cart.items())
+    tax = subtotal * 0.10
+    discount = 0
+
+    if subtotal > 5000:
+        discount = subtotal * 0.05
+        print(f" 5% Discount Applied: -${discount:.2f}")
+#The .2f method returns the value with two decimal places(eg. $100.50), unlike the float method alone
+
+    total = subtotal + tax - discount
+    print(f"Total: ${total:.2f} JMD (Tax Included)")
+
+    while True:
+        payment = input("Please enter the payment amount: ")
+        if payment.replace(".", "").isdigit() and float(payment) >= total:
+            change = float(payment) - total
+            print(f" Your payment was successful! Your change is: ${change:.2f} JMD")
+            print_receipt(subtotal, tax, discount, total, payment, change)
+            cart.clear()
+            break
+
+        else:
+            print(" Insufficeint funds.")
+            print(f"${total} needed in order to complete your order ")
 
 
-Possible Modification
+# Function that allows the user to print the receipt
+def print_receipt(subtotal, tax, discount, total, payment, change):
+    print(" Best Buy Retail Store ")
+    print("_______________________")
 
-- The user can modify the product catalog by adding or changing it from within the products seen in the dictionary.
-- The sales tax and discount values can be adjusted in the checkout function.
+    print("         RECEIPT       ")
+    print("_______________________")
+    for item, quantity in cart.items():
+        print(f"{item}: {quantity} x ${products[item][0]} = ${products[item][0] * quantity}")
+    print(f"Subtotal: ${subtotal:.2f}")
+    print(f"Tax: ${tax:.2f}")
+    print(f"Discount: -${discount:.2f}")
+    print(f"Total: ${total:.2f}")
+    print(f"Paid: ${payment}")
+    print(f"Change: ${change:.2f}")
 
-Issues & Debugging
+    print("  Thank you for shopping!  ")
+    print("    Have a great day!  ")
+    print("__________________________")
 
-- The program is menu-driven and text-based. Which means it can only accept valid input based on the instructions prompted in the program. The user must enter valid inputs in order to proceed to the next step in the program.  
-- If the product's name is not spelled correctly, the program will not recognize it as an available product. Displaying a message saying this product was not found.
-- The program does not store any user information or transaction history.
+# This function will be the main menu displayed to the user
+def main():
+    while True:
+        print(" Best Buy Retail Point of Sale System ")
+        print("______________________________________")
+        print("1. Add Item  2. View Products  3. Remove Item  4. View Cart  5. Checkout  6. Exit")
+        print("___________________________________________________________________________________")
+        choice = input("Please enter choice: ")
+        if choice == "1":
+            add_item()
+        elif choice == "2":
+            view_proucts()
+        elif choice == "3":
+            remove_item()
+        elif choice == "4":
+            view_cart()
+        elif choice == "5":
+            checkout()
+        elif choice == "6":
+            print("Exiting Best Buy Point Of Sale Program....")
+            print("Have a great day!")
+            break
+        else:
+            print(" Invalid input. Please select a valid choice from the menu.")
 
-Possible Future Improvements
-
-- Implement a graphical user interface (GUI) - This would allow the user to interact with the screen using icons, eg. Menu icon.
-- Add a database that would be able to store the transaction history
-- Implement user authentication, that way only authorized users can access the program.
+# This checks the script and allows the program to  run successfully
+if __name__ == "__main__":
+    main()
